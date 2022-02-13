@@ -1,0 +1,41 @@
+never ReindeerSafety {    /* !([] ((! ((Reindeer@GetHitched))) || ([] (((((! ((Elves@GetHelp))) && (! ((Santa@PrepareSleigh)))) && (! ((Santa@HelpElves)))) && ((Santa@PostPrepareSleigh))) && (! ((Santa@PostHelpElves))))))) */
+T0_init:
+	do
+	:: atomic { (! ((! ((Reindeer@GetHitched)))) && ! ((((((! ((Elves@GetHelp))) && (! ((Santa@PrepareSleigh)))) && (! ((Santa@HelpElves)))) && ((Santa@PostPrepareSleigh))) && (! ((Santa@PostHelpElves)))))) -> assert(!(! ((! ((Reindeer@GetHitched)))) && ! ((((((! ((Elves@GetHelp))) && (! ((Santa@PrepareSleigh)))) && (! ((Santa@HelpElves)))) && ((Santa@PostPrepareSleigh))) && (! ((Santa@PostHelpElves))))))) }
+	:: (! ((! ((Reindeer@GetHitched))))) -> goto T0_S4
+	:: (1) -> goto T0_init
+	od;
+T0_S4:
+	do
+	:: atomic { (! ((((((! ((Elves@GetHelp))) && (! ((Santa@PrepareSleigh)))) && (! ((Santa@HelpElves)))) && ((Santa@PostPrepareSleigh))) && (! ((Santa@PostHelpElves)))))) -> assert(!(! ((((((! ((Elves@GetHelp))) && (! ((Santa@PrepareSleigh)))) && (! ((Santa@HelpElves)))) && ((Santa@PostPrepareSleigh))) && (! ((Santa@PostHelpElves))))))) }
+	:: (1) -> goto T0_S4
+	od;
+accept_all:
+	skip
+}
+never ElfSafety {    /* !([] ((! ((Elves@GetHelp))) || ([] (((((! ((Reindeer@GetHitched))) && (! ((Santa@HelpElves)))) && (! ((Santa@HelpElves)))) && (! ((Santa@PostPrepareSleigh)))) && ((Santa@PostHelpElves)))))) */
+T0_init:
+	do
+	:: atomic { (! ((! ((Elves@GetHelp)))) && ! ((((((! ((Reindeer@GetHitched))) && (! ((Santa@HelpElves)))) && (! ((Santa@HelpElves)))) && (! ((Santa@PostPrepareSleigh)))) && ((Santa@PostHelpElves))))) -> assert(!(! ((! ((Elves@GetHelp)))) && ! ((((((! ((Reindeer@GetHitched))) && (! ((Santa@HelpElves)))) && (! ((Santa@HelpElves)))) && (! ((Santa@PostPrepareSleigh)))) && ((Santa@PostHelpElves)))))) }
+	:: (! ((! ((Elves@GetHelp))))) -> goto T0_S4
+	:: (1) -> goto T0_init
+	od;
+T0_S4:
+	do
+	:: atomic { (! ((((((! ((Reindeer@GetHitched))) && (! ((Santa@HelpElves)))) && (! ((Santa@HelpElves)))) && (! ((Santa@PostPrepareSleigh)))) && ((Santa@PostHelpElves))))) -> assert(!(! ((((((! ((Reindeer@GetHitched))) && (! ((Santa@HelpElves)))) && (! ((Santa@HelpElves)))) && (! ((Santa@PostPrepareSleigh)))) && ((Santa@PostHelpElves)))))) }
+	:: (1) -> goto T0_S4
+	od;
+accept_all:
+	skip
+}
+never Sleeping {    /* !((! ([] ((! ((Santa@PrepareSleigh))) && (! ((Santa@HelpElves)))))) || ([] ((! ((Reindeer@GetHitched))) && (! ((Elves@GetHelp)))))) */
+T0_init:
+	do
+	:: (! (((! ((Reindeer@GetHitched))) && (! ((Elves@GetHelp))))) && ((! ((Santa@PrepareSleigh))) && (! ((Santa@HelpElves))))) -> goto accept_S4
+	:: (((! ((Santa@PrepareSleigh))) && (! ((Santa@HelpElves))))) -> goto T0_init
+	od;
+accept_S4:
+	do
+	:: (((! ((Santa@PrepareSleigh))) && (! ((Santa@HelpElves))))) -> goto accept_S4
+	od;
+}
