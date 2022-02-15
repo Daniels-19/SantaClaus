@@ -23,8 +23,6 @@ var deer int = 0
 
 const deerGroup int = 9
 
-var deerMutex chan struct{} = make(chan struct{})
-
 func main() {
 
 	go Santa()
@@ -64,7 +62,6 @@ func SantaReceive(c chan struct{}, no int) {
 }
 
 func Santa() {
-	deerMutex <- struct{}{}
 	elfMutex <- struct{}{}
 
 	for true {
@@ -83,7 +80,6 @@ func Santa() {
 			SantaReceive(santaExit, deerGroup) // Wait for all deer to be unhitched
 
 			deer -= deerGroup
-			deerMutex <- struct{}{}
 
 		} else { // Elf case
 
@@ -107,13 +103,8 @@ func Deer() {
 	for true {
 		// On holiday
 
-		<-deerMutex
 		deer++
-		if deer == deerGroup {
-			santaWake <- struct{}{}
-		} else {
-			deerMutex <- struct{}{}
-		}
+		santaWake <- struct{}{}
 
 		<-hitchLock // Wait for santa to wake up
 
@@ -135,12 +126,12 @@ func Elf() {
 	for true {
 		// Working
 
-		<-elfMutex
+		<-elfMutex // Keeps out more than three elves
 		elves++
 		if elves == elfGroup {
-			santaWake <- struct{}{}
+			santaWake <- struct{}{} // Third elf wakes santa
 		} else {
-			elfMutex <- struct{}{}
+			elfMutex <- struct{}{} // Only first two elves get here
 		}
 
 		<-showInLock // Wait for santa to wake up and open study
