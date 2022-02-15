@@ -27,17 +27,17 @@ active proctype Santa ()
 
 	GiveToys:
 		reindeerLock = true;
-		(hitchedReindeer == 2)
+		(hitchedReindeer == 2) // Here we wait for the reindeer to be harnessed
 		hitchedReindeer = 0;
 		reindeerLock2 = true;
-
+		
 		// Give toys
 
-		(hitchedReindeer == 2)
+		(hitchedReindeer == 2) //Here we wait for the reindeer to be unharnessed
 		hitchedReindeer = 0;
 		reindeerLock = false;
 		reindeerLock2 = false;
-		reindeer = reindeer - 2;
+		reindeer = 0;
 		
 		goto Sleep;
 	
@@ -109,31 +109,23 @@ active [2] proctype Reindeer ()
 
 	GetHitched:
 		reindeerAwake = false;
-		hitchedReindeer++;
+		hitchedReindeer++;		// Here the reindeer are getting harnessed
 		(reindeerLock2)
 
 		// Let Santa riding them and delivering presents
-
-		hitchedReindeer++;
+		
+		hitchedReindeer++;		// Here the reindeer are getting unharnessed
 		(!reindeerLock)
 		goto Holiday;
 
 }
 
+//We made only one section for Harnessing, giving toys and unharnessing
+
 ltl SantaSleeping {always ((reindeer < 2 && elves < 1) -> Santa@Sleep)}
-
-// ltl SantaSleeping {always (reindeer < 2 && elves < 1) -> always (Santa@Sleep)}
-
-ltl SantaGivingToys {always (reindeer == 9 -> eventually (Santa@GiveToys)) }
-ltl SantaHelpingElves {always (elves == 2 -> eventually (Santa@HelpElves))}
-ltl ElfHelp {always (Santa@HelpElves -> always (Reindeer@HomeFromHoliday || Reindeer@Holiday))}
-ltl ReindeerHarnessed {always (Santa@GiveToys) -> always (Elves@LeaveWorkbench || Elves@LeaveWorkbench)}
-
-// ltl SantaHelpingElves {always (Santa@HelpElves) -> always (!Reindeer@GetHitched && elves == 3)}
-// ltl ReindeerHoliday {always (!Reindeer@GetHitched -> always (!Santa@PrepareSleigh))}
-// ltl ReindeerHitched {always (Reindeer@GetHitched -> always (!Elves@GetHelp && !Santa@PrepareSleigh && !Santa@HelpElves && Santa@PostPrepareSleigh && !Santa@PostHelpElves))}
-// ltl ElfWorking {always (!Elves@GetHelp -> always (!Santa@ShowOut))}
-// ltl ElfGettingHelp {always (Elves@GetHelp -> always (Santa@ShowOut))}
+ltl SantaSleeping2 { always ( (Santa@Sleep) -> eventually (reindeer == 2 || elves == 1))}
+ltl SantaGivingToys { always (Santa@GiveToys -> (reindeer == 2 ) ) }
+ltl SantaHelpingElves { always (Santa@HelpElves -> (elves == 1 ) ) }
 
 // spin -search SantaClaus.pml
 // spin -search -ltl ReindeerSafety SantaClaus.pml
