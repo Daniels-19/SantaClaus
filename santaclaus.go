@@ -12,7 +12,7 @@ var showOutLock chan struct{} = make(chan struct{})
 
 var elves int = 0
 
-var elfGroup int = 3
+const elfGroup int = 3
 
 var elfMutex chan struct{} = make(chan struct{})
 
@@ -23,7 +23,7 @@ var unhitchLock chan struct{} = make(chan struct{})
 
 var deer int = 0
 
-var deerGroup int = 9
+const deerGroup int = 9
 
 var deerMutex chan struct{} = make(chan struct{})
 
