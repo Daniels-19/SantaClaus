@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 var santaWake chan struct{} = make(chan struct{})
 var santaCS chan struct{} = make(chan struct{})
 var santaExit chan struct{} = make(chan struct{})
@@ -16,6 +14,8 @@ var elvesShownOut int = 0
 
 var elfGroup int = 3
 
+var elfMutex chan struct{} = make(chan struct{})
+
 var hitchLock chan struct{} = make(chan struct{})
 var toyLock chan struct{} = make(chan struct{})
 var unhitchLock chan struct{} = make(chan struct{})
@@ -26,7 +26,10 @@ var deerUnhitched int = 0
 
 var deerGroup int = 9
 
+var deerMutex chan struct{} = make(chan struct{})
+
 func main() {
+
 	go Santa()
 
 	go Deer()
@@ -57,43 +60,52 @@ func SantaSend(c chan struct{}, no int) {
 	}
 }
 
+func SantaReceive(c chan struct{}, no int) {
+	for i := 0; i < no; i++ {
+		<-c
+	}
+}
+
 func Santa() {
+	deerMutex <- struct{}{}
+	elfMutex <- struct{}{}
+
 	for true {
 		<-santaWake
 
 		if deer >= deerGroup { // Deer priority
-			fmt.Println("Helping deer")
 
-			SantaSend(hitchLock, deerGroup)
+			SantaSend(hitchLock, deerGroup) // Allow deer to be hitched
 
-			<-santaCS // Wait for all deer to get hitched
+			SantaReceive(santaCS, deerGroup) // Wait for all deer to get hitched
 
-			SantaSend(toyLock, deerGroup)
+			SantaSend(toyLock, deerGroup) // Confirm all deer have entered
 
 			// Give toys
 
-			<-santaExit // Wait for all deer to be unhitched
+			SantaReceive(santaExit, deerGroup) // Wait for all deer to be unhitched
 
 			deer -= deerGroup
 			deerHitched = 0
 			deerUnhitched = 0
-			SantaSend(unhitchLock, deerGroup)
+			deerMutex <- struct{}{}
 
 		} else { // Elf case
-			SantaSend(showInLock, elfGroup)
 
-			<-santaCS // Wait for elves to enter study
+			SantaSend(showInLock, elfGroup) // Allow elves into study
 
-			SantaSend(helpRDLock, elfGroup)
+			SantaReceive(santaCS, elfGroup) // Wait for elves to enter study
+
+			SantaSend(helpRDLock, elfGroup) // Confirm all elves have entered
 
 			// Help elves
 
-			<-santaExit // Wait for elves to leave study
+			SantaReceive(santaExit, elfGroup) // Wait for elves to leave study
 
 			elves -= elfGroup
 			elvesShownIn = 0
 			elvesShownOut = 0
-			SantaSend(showOutLock, elfGroup)
+			elfMutex <- struct{}{}
 		}
 	}
 }
@@ -102,26 +114,27 @@ func Deer() {
 	for true {
 		// On holiday
 
+		<-deerMutex
 		deer++
 		if deer == deerGroup {
 			santaWake <- struct{}{}
+		} else {
+			deerMutex <- struct{}{}
 		}
 
 		<-hitchLock // Wait for santa to wake up
 
-		deerHitched++
-		if deerHitched == deerGroup {
-			santaCS <- struct{}{}
-		}
-		<-toyLock // Wait for santa to hitch
+		// Get hitched
+
+		santaCS <- struct{}{} // Signal to santa that I am hitched
+
+		<-toyLock // Wait for all deer to be hitched
 
 		// Deliver presents
 
-		deerUnhitched++
-		if deerUnhitched == deerGroup {
-			santaExit <- struct{}{}
-		}
-		<-unhitchLock // Wait for santa to unhitch
+		// Get unhitched
+
+		santaExit <- struct{}{} // Signal to santa that I am unhitched
 	}
 }
 
@@ -129,25 +142,26 @@ func Elf() {
 	for true {
 		// Working
 
+		<-elfMutex
 		elves++
 		if elves == elfGroup {
 			santaWake <- struct{}{}
+		} else {
+			elfMutex <- struct{}{}
 		}
 
-		<-showInLock // Wait for santa to wake up
+		<-showInLock // Wait for santa to wake up and open study
 
-		elvesShownIn++
-		if elvesShownIn == elfGroup {
-			santaCS <- struct{}{}
-		}
-		<-helpRDLock // Wait for santa to show into study
+		// Enter study
+
+		santaCS <- struct{}{} // Signal to santa that I am in the study
+
+		<-helpRDLock // Wait for santa other elves to enter study
 
 		// Receive help
 
-		elvesShownOut++
-		if elvesShownOut == elfGroup {
-			santaExit <- struct{}{}
-		}
-		<-showOutLock // Wait for santa to show out of study
+		// Leave study
+
+		santaExit <- struct{}{} // Signal to santa that I left the study
 	}
 }
