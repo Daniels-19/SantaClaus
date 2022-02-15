@@ -4,18 +4,18 @@ import "fmt"
 
 var santaWake chan struct{} = make(chan struct{})
 
-var elfLock chan struct{} = make(chan struct{})
-var elfLock2 chan struct{} = make(chan struct{})
-var elfLock3 chan struct{} = make(chan struct{})
+var showInLock chan struct{} = make(chan struct{})
+var helpRDLock chan struct{} = make(chan struct{})
+var showOutLock chan struct{} = make(chan struct{})
 
 var elves int = 0
 var elvesHelped int = 0
 
 var elfGroup int = 3
 
-var deerLock chan struct{} = make(chan struct{})
-var deerLock2 chan struct{} = make(chan struct{})
-var deerLock3 chan struct{} = make(chan struct{})
+var hitchLock chan struct{} = make(chan struct{})
+var toyLock chan struct{} = make(chan struct{})
+var unhitchLock chan struct{} = make(chan struct{})
 
 var deer int = 0
 var deerHitched int = 0
@@ -47,21 +47,27 @@ func main() {
 	go Elf()
 }
 
+func SantaSend(c chan struct{}, no int) {
+	for i := 0; i < no; i++ {
+		c <- struct{}{}
+	}
+}
+
 func Santa() {
 	for true {
 		<-santaWake
 
-		if deer >= deerGroup { // Give toys
+		if deer >= deerGroup { // Deer priority
 			fmt.Println("Helping deer")
 
-			deerLock <- struct{}{}
+			SantaSend(hitchLock, deerGroup)
 
 			for deerHitched < deerGroup {
 				// Wait for all deer to get hitched
 			}
 			deerHitched = 0
 
-			deerLock2 <- struct{}{}
+			SantaSend(toyLock, deerGroup)
 
 			// Give toys
 
@@ -71,15 +77,17 @@ func Santa() {
 
 			deerHitched = 0
 			deer -= deerGroup
-			deerLock3 <- struct{}{}
+			SantaSend(unhitchLock, deerGroup)
 
-		} else { // Help elves
-			elfLock <- struct{}{}
+		} else { // Elf case
+			SantaSend(showInLock, elfGroup)
+
 			for elvesHelped < elfGroup {
 				// Wait for elves to enter study
 			}
+
 			elvesHelped = 0
-			elfLock2 <- struct{}{}
+			SantaSend(helpRDLock, elfGroup)
 
 			// Help elves
 
@@ -89,7 +97,7 @@ func Santa() {
 
 			elvesHelped = 0
 			elves -= elfGroup
-			elfLock3 <- struct{}{}
+			SantaSend(showOutLock, elfGroup)
 		}
 	}
 }
@@ -103,15 +111,15 @@ func Deer() {
 			santaWake <- struct{}{}
 		}
 
-		<-deerLock // Wait for santa to wake up
+		<-hitchLock // Wait for santa to wake up
 
 		deerHitched++
-		<-deerLock2 // Wait for santa to hitch
+		<-toyLock // Wait for santa to hitch
 
 		// Deliver presents
 
 		deerHitched++
-		<-deerLock3 // Wait for santa to unhitch
+		<-unhitchLock // Wait for santa to unhitch
 	}
 }
 
@@ -124,69 +132,15 @@ func Elf() {
 			santaWake <- struct{}{}
 		}
 
-		<-elfLock // Wait for santa to wake up
+		<-showInLock // Wait for santa to wake up
 
 		elvesHelped++
 
-		<-elfLock2 // Wait for santa to show into study
+		<-helpRDLock // Wait for santa to show into study
 
 		// Receive help
 
 		elvesHelped++
-		<-elfLock3 // Wait for santa to show out of study
+		<-showOutLock // Wait for santa to show out of study
 	}
 }
-
-/*
-
-var Bools map[string]map[string]bool = map[string]map[string]bool{
-	"Elf": {
-		"Awake": false,
-		"Lock1": false,
-		"Lock2": false,
-	},
-	"Deer": {
-		"Awake": false,
-		"Lock1": false,
-		"Lock2": false,
-	},
-}
-
-var Ints map[string]map[string]int = map[string]map[string]int{
-	"Elf": {
-		"Number1": 0,
-		"Number2": 0,
-		"Group":   2,
-	},
-	"Deer": {
-		"Number1": 0,
-		"Number2": 0,
-		"Group":   2,
-	},
-}
-
-func Worker(key string) {
-	for true {
-		Ints[key]["Number1"]++
-
-		if Ints[key]["Number1"] == Ints[key]["Group"] {
-			Bools[key]["Awake"] = true
-		}
-		for !Bools[key]["Lock1"] {
-			// Wait for santa to wake up
-		}
-		Bools[key]["Awake"] = false
-		Ints[key]["Number2"]++
-		for !Bools[key]["Lock2"] {
-			// Wait for santa to enter critical section
-		}
-
-		// Critical section
-
-		Ints[key]["Number2"]++
-		for !Bools[key]["Lock1"] {
-			// Wait for santa to exit critical section
-		}
-	}
-}
-*/
