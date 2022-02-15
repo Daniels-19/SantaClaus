@@ -8,7 +8,6 @@ var santaExit chan struct{} = make(chan struct{})
 // Elf vars
 var showInLock chan struct{} = make(chan struct{})
 var helpRDLock chan struct{} = make(chan struct{})
-var showOutLock chan struct{} = make(chan struct{})
 
 var elves int = 0
 
@@ -19,7 +18,6 @@ var elfMutex chan struct{} = make(chan struct{})
 // Deer vars
 var hitchLock chan struct{} = make(chan struct{})
 var toyLock chan struct{} = make(chan struct{})
-var unhitchLock chan struct{} = make(chan struct{})
 
 var deer int = 0
 
