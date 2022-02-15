@@ -1,28 +1,27 @@
 package main
 
+// Santa vars
 var santaWake chan struct{} = make(chan struct{})
 var santaCS chan struct{} = make(chan struct{})
 var santaExit chan struct{} = make(chan struct{})
 
+// Elf vars
 var showInLock chan struct{} = make(chan struct{})
 var helpRDLock chan struct{} = make(chan struct{})
 var showOutLock chan struct{} = make(chan struct{})
 
 var elves int = 0
-var elvesShownIn int = 0
-var elvesShownOut int = 0
 
 var elfGroup int = 3
 
 var elfMutex chan struct{} = make(chan struct{})
 
+// Deer vars
 var hitchLock chan struct{} = make(chan struct{})
 var toyLock chan struct{} = make(chan struct{})
 var unhitchLock chan struct{} = make(chan struct{})
 
 var deer int = 0
-var deerHitched int = 0
-var deerUnhitched int = 0
 
 var deerGroup int = 9
 
@@ -86,8 +85,6 @@ func Santa() {
 			SantaReceive(santaExit, deerGroup) // Wait for all deer to be unhitched
 
 			deer -= deerGroup
-			deerHitched = 0
-			deerUnhitched = 0
 			deerMutex <- struct{}{}
 
 		} else { // Elf case
@@ -103,8 +100,6 @@ func Santa() {
 			SantaReceive(santaExit, elfGroup) // Wait for elves to leave study
 
 			elves -= elfGroup
-			elvesShownIn = 0
-			elvesShownOut = 0
 			elfMutex <- struct{}{}
 		}
 	}
